@@ -1,7 +1,8 @@
 # tdcj
 
-A [re-frame](https://github.com/day8/re-frame) application designed to ... well, that part is up to
-you.
+***Scaffolded with `lein new re-frame <app-name>`***
+
+A [re-frame](https://github.com/day8/re-frame) todo app.
 
 ## Getting Started
 
