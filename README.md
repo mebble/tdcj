@@ -1,6 +1,6 @@
 # tdcj
 
-***Scaffolded with `lein new re-frame <app-name>`***
+***Scaffolded with `lein new re-frame tdcj`***
 
 A [re-frame](https://github.com/day8/re-frame) todo app.
 
