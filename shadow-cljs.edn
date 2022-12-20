@@ -1,3 +1,6 @@
+;; Resources:
+;; https://shadow-cljs.github.io/docs/UsersGuide.html#_introduction
+
 {:nrepl {:port 8777}
 
  

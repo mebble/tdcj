@@ -1,4 +1,5 @@
 (ns tdcj.db)
 
 (def default-db
-  {:name "re-frame"})
+  {:name "re-frame"
+   :count (cycle [1 2 3])})

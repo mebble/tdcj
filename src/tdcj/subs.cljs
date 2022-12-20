@@ -6,3 +6,8 @@
  ::name
  (fn [db]
    (:name db)))
+ 
+(re-frame/reg-sub
+  ::count
+ (fn [db]
+   (take 1 (:count db))))

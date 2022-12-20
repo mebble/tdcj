@@ -4,8 +4,7 @@
    [re-frame.core :as re-frame]
    [tdcj.events :as events]
    [tdcj.views :as views]
-   [tdcj.config :as config]
-   ))
+   [tdcj.config :as config]))
 
 
 (defn dev-setup []
@@ -19,6 +18,7 @@
     (rdom/render [views/main-panel] root-el)))
 
 (defn init []
+  (println ::events/initialize-db)
   (re-frame/dispatch-sync [::events/initialize-db])
   (dev-setup)
   (mount-root))
