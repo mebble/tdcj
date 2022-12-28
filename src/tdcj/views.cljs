@@ -1,13 +1,13 @@
 (ns tdcj.views
   (:require
-   [re-frame.core :as re-frame]
+   [re-frame.core :as rf]
    [tdcj.subs :as subs]
    [tdcj.events :as events]))
 
 (defn main-panel []
-  (let [name (re-frame/subscribe [::subs/name])
-        count (re-frame/subscribe [::subs/count])]
-    [:div
-     [:h1
-      "Hello frooo " @name " " @count]
-     [:button {:on-click #(re-frame/dispatch [::events/update-count])} "Cycle count"]]))
+  [:div
+   [:h1
+    "Todo App"]
+   [:ul (for [t @(rf/subscribe [::subs/todos])]
+          ^{:key (:id t)} [:li {:data-id (:id t)} (:txt t)])]
+    [:button {:on-click #(rf/dispatch [::events/add-todo (rand-nth ["one" "two" "three"])])} "Add Todo Item"]])

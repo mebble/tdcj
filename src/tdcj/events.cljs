@@ -1,14 +1,23 @@
 (ns tdcj.events
   (:require
-   [re-frame.core :as re-frame]
+   [re-frame.core :as rf]
    [tdcj.db :as db]))
 
-(re-frame/reg-event-db
+(rf/reg-event-db
  ::initialize-db
  (fn [_ _]
-   db/default-db))
+   db/init-db))
 
-(re-frame/reg-event-db
- ::update-count
+(rf/reg-event-db
+  ::add-todo
+ (fn [db [_ todo]]
+   (-> db
+       (update :todos (fn [todos] (conj todos {:txt todo
+                                               :id (:count db)})))
+       (update :count inc))))
+
+(rf/reg-event-db
+ ::inc
+ [rf/debug]
  (fn [db _]
-   (assoc db :count (-> db :count rest))))
+   (update db :count inc)))
