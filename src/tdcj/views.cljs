@@ -14,6 +14,24 @@
            :value val
            :on-input #(-> % .-target .-value on-input)}])
 
+(defn todo-item [i todo]
+  [:li {:data-id (:id todo)}
+   (if-not (:editing todo)
+     (:txt todo)
+     [textbox (:txt todo) #(rf/dispatch [::events/change-todo i %])])
+   [checkbox (:editing todo) #(rf/dispatch [::events/edit-todo i])]
+   [:button {:on-click #(rf/dispatch [::events/remove-todo i])} "🗑️"]
+   [checkbox (:done todo) #(rf/dispatch [::events/strike-todo i])]
+   (when (:done todo) "DONE")])
+
+(defn new-todo []
+  (let [new-todo-txt @(rf/subscribe [::subs/new-todo-txt])]
+    [:form {:on-submit (fn [e]
+                         (.preventDefault e)
+                         (rf/dispatch [::events/add-todo new-todo-txt]))}
+     [textbox new-todo-txt #(rf/dispatch [::events/edit-new-todo %])]
+     [:button {:type "submit"} "Add Todo Item"]]))
+
 (defn main-panel []
   [:div
    [:h1
@@ -24,21 +42,9 @@
     ;; https://github.com/reagent-project/reagent/issues/18#issuecomment-51316043
     (doall (for [i (range @(rf/subscribe [::subs/num-todos]))]
              (let [t @(rf/subscribe [::subs/todo i])]
-               ^{:key (:id t)} [:li {:data-id (:id t)}
-                                (if-not (:editing t)
-                                  (:txt t)
-                                  [textbox (:txt t) #(rf/dispatch [::events/change-todo i %])])
-                                [checkbox (:editing t) #(rf/dispatch [::events/edit-todo i])] 
-                                [:button {:on-click #(rf/dispatch [::events/remove-todo i])} "🗑️"]
-                                [checkbox (:done t) #(rf/dispatch [::events/strike-todo i])]
-                                (when (:done t) "DONE")])))
+               ^{:key (:id t)} [todo-item i t])))
 
     ;; Alternatively we can subscribe to all todos:
     #_(for [t @(rf/subscribe [::subs/todos])]
         ^{:key (:id t)} [:li {:data-id (:id t)} (:txt t)])]
-   (let [new-todo-txt @(rf/subscribe [::subs/new-todo-txt])]
-     [:form {:on-submit (fn [e]
-                          (.preventDefault e)
-                          (rf/dispatch [::events/add-todo new-todo-txt]))}
-      [textbox new-todo-txt #(rf/dispatch [::events/edit-new-todo %])]
-      [:button {:type "submit"} "Add Todo Item"]])])
+   [new-todo]])
