@@ -11,10 +11,18 @@
    [:ul
 
     ;; We can subscribe to each todo:
+    ;; https://github.com/reagent-project/reagent/issues/18#issuecomment-51316043
     (doall (for [i (range @(rf/subscribe [::subs/num-todos]))] 
              (let [t @(rf/subscribe [::subs/todo i])] 
                ^{:key (:id t)} [:li {:data-id (:id t)} 
-                                (:txt t) 
+                                (if-not (:editing t)
+                                  (:txt t)
+                                  [:input {:type "text"
+                                           :value (:txt t)
+                                           :on-input #(rf/dispatch [::events/change-todo i (-> % .-target .-value)])}])
+                                [:input {:type "checkbox"
+                                         :value (:editing t)
+                                         :on-click #(rf/dispatch [::events/edit-todo i])}]
                                 [:button {:on-click #(rf/dispatch [::events/remove-todo i])} "🗑️"]
                                 [:input {:type "checkbox"
                                          :value (:done t)

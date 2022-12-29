@@ -19,7 +19,8 @@
    (-> db
        (update :todos (fn [todos] (conj todos {:txt todo
                                                :id (:count db)
-                                               :done false})))
+                                               :done false
+                                               :editing false})))
        (update :count inc))))
 
 (rf/reg-event-db
@@ -33,6 +34,18 @@
    (update-in db
            [:todos i :done]
            (fn [done] (not done)))))
+
+(rf/reg-event-db
+ ::edit-todo
+ (fn [db [_ i]]
+   (update-in db
+              [:todos i :editing]
+              (fn [editing] (not editing)))))
+
+(rf/reg-event-db
+ ::change-todo
+ (fn [db [_ i val]]
+   (assoc-in db [:todos i :txt] val)))
 
 (rf/reg-event-db
  ::inc
