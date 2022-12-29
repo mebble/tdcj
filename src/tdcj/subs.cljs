@@ -15,4 +15,4 @@
 (re-frame/reg-sub
  ::num-todos
  (fn [db _]
-   (doto (count (:todos db)) println)))
+   (count (:todos db))))

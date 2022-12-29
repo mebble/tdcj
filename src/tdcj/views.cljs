@@ -8,6 +8,15 @@
   [:div
    [:h1
     "Todo App"]
-   [:ul (for [t @(rf/subscribe [::subs/todos])]
-          ^{:key (:id t)} [:li {:data-id (:id t)} (:txt t)])]
+   [:ul
+
+    ;; We can subscribe to each todo:
+    (doall (for [i (range @(rf/subscribe [::subs/num-todos]))]
+                  (let [t @(rf/subscribe [::subs/todo i])]
+                    ^{:key (:id t)} [:li {:data-id (:id t)} (:txt t)])))
+    
+    ;; Alternatively we can subscribe to all todos:
+    #_(for [t @(rf/subscribe [::subs/todos])] 
+        ^{:key (:id t)} [:li {:data-id (:id t)} (:txt t)])]
+
     [:button {:on-click #(rf/dispatch [::events/add-todo (rand-nth ["one" "two" "three"])])} "Add Todo Item"]])
