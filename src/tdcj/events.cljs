@@ -18,13 +18,21 @@
  (fn [db [_ todo]]
    (-> db
        (update :todos (fn [todos] (conj todos {:txt todo
-                                               :id (:count db)})))
+                                               :id (:count db)
+                                               :done false})))
        (update :count inc))))
 
 (rf/reg-event-db
  ::remove-todo
  (fn [db [_ i]]
    (update db :todos (fn [todos] (vec-remove i todos)))))
+
+(rf/reg-event-db
+ ::strike-todo
+ (fn [db [_ i]]
+   (update-in db
+           [:todos i :done]
+           (fn [done] (not done)))))
 
 (rf/reg-event-db
  ::inc
