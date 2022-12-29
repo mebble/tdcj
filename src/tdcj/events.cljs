@@ -3,6 +3,11 @@
    [re-frame.core :as rf]
    [tdcj.db :as db]))
 
+(defn vec-remove
+  "remove elem in coll (https://stackoverflow.com/a/18319708/5811761)"
+  [pos coll]
+  (into (subvec coll 0 pos) (subvec coll (inc pos))))
+
 (rf/reg-event-db
  ::initialize-db
  (fn [_ _]
@@ -15,6 +20,11 @@
        (update :todos (fn [todos] (conj todos {:txt todo
                                                :id (:count db)})))
        (update :count inc))))
+
+(rf/reg-event-db
+ ::remove-todo
+ (fn [db [_ i]]
+   (update db :todos (fn [todos] (vec-remove i todos)))))
 
 (rf/reg-event-db
  ::inc
