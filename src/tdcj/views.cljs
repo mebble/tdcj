@@ -10,34 +10,40 @@
            :on-click on-click}])
 
 (defn textbox [val on-input]
-  [:input {:type "text"
+  [:input.border {:type "text"
            :value val
            :on-input #(-> % .-target .-value on-input)}])
 
+(defn btn
+  [& args]
+  (apply vector :button.p-1.border-2.bg-gray-300 args))
+
+(defn icon [src]
+  [:img.w-6.h-6 {:src src}])
+
 (defn todo-item [i todo]
-  [:li {:data-id (:id todo)}
+  [:li.flex.justify-center.items-center.space-x-3.mb-3 {:data-id (:id todo)}
    (if-not (:editing todo)
-     (:txt todo)
+     [:span (:txt todo)]
      [textbox (:txt todo) #(rf/dispatch [::events/change-todo i %])])
    [checkbox (:editing todo) #(rf/dispatch [::events/edit-todo i])]
-   [:button {:on-click #(rf/dispatch [::events/remove-todo i])} "🗑️"]
+   [btn {:on-click #(rf/dispatch [::events/remove-todo i])}
+    [icon "/icons/trash.svg"]]
    [checkbox (:done todo) #(rf/dispatch [::events/strike-todo i])]
    (when (:done todo) "DONE")])
 
 (defn new-todo []
   (let [new-todo-txt @(rf/subscribe [::subs/new-todo-txt])]
-    [:form {:on-submit (fn [e]
+    [:form.space-x-2 {:on-submit (fn [e]
                          (.preventDefault e)
                          (rf/dispatch [::events/add-todo new-todo-txt]))}
      [textbox new-todo-txt #(rf/dispatch [::events/edit-new-todo %])]
-     [:button {:type "submit"} "Add Todo Item"]]))
+     [btn {:type "submit"} "Add Todo Item"]]))
 
 (defn main-panel []
-  [:div
-   [:h1
-    "Todo App"]
+  [:div.w-fit.m-auto.mt-20
+   [:h1.text-3xl.text-center.mb-4 "Todo App"]
    [:ul
-
     ;; We can subscribe to each todo:
     ;; https://github.com/reagent-project/reagent/issues/18#issuecomment-51316043
     (doall (for [i (range @(rf/subscribe [::subs/num-todos]))]

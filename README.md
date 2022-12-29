@@ -117,6 +117,12 @@ Opening the app in your browser starts a
 [ClojureScript browser REPL](https://clojurescript.org/reference/repl#using-the-browser-as-an-evaluation-environment),
 to which you may now connect.
 
+### Developing tailwind
+
+```sh
+npm run tailwind:watch
+```
+
 #### Connecting to the browser REPL from your editor
 
 See
@@ -186,6 +192,7 @@ Build the app with the `prod` profile:
 
 ```sh
 npm install
+npm run tailwind:release
 npm run release
 ```
 
