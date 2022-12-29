@@ -1,18 +1,23 @@
 (ns tdcj.subs
   (:require
-   [re-frame.core :as re-frame]))
+   [re-frame.core :as rf]))
  
-(re-frame/reg-sub
+(rf/reg-sub
   ::todo
  (fn [db [_ n]]
    (nth (:todos db) n)))
 
-(re-frame/reg-sub
+(rf/reg-sub
  ::todos
  (fn [db _]
    (:todos db)))
 
-(re-frame/reg-sub
+(rf/reg-sub
  ::num-todos
  (fn [db _]
    (count (:todos db))))
+
+(rf/reg-sub
+ ::new-todo-txt
+ (fn [db _]
+   (:new-todo-txt db)))

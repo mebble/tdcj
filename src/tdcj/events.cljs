@@ -21,7 +21,8 @@
                                                :id (:count db)
                                                :done false
                                                :editing false})))
-       (update :count inc))))
+       (update :count inc)
+       (assoc :new-todo-txt ""))))
 
 (rf/reg-event-db
  ::remove-todo
@@ -46,6 +47,11 @@
  ::change-todo
  (fn [db [_ i val]]
    (assoc-in db [:todos i :txt] val)))
+
+(rf/reg-event-db
+ ::edit-new-todo
+ (fn [db [_ val]]
+   (assoc db :new-todo-txt val)))
 
 (rf/reg-event-db
  ::inc

@@ -1,7 +1,7 @@
 (ns tdcj.core
   (:require
    [reagent.dom :as rdom]
-   [re-frame.core :as re-frame]
+   [re-frame.core :as rf]
    [tdcj.events :as events]
    [tdcj.views :as views]
    [tdcj.config :as config]))
@@ -12,13 +12,13 @@
     (println "dev mode")))
 
 (defn ^:dev/after-load mount-root []
-  (re-frame/clear-subscription-cache!)
+  (rf/clear-subscription-cache!)
   (let [root-el (.getElementById js/document "app")]
     (rdom/unmount-component-at-node root-el)
     (rdom/render [views/main-panel] root-el)))
 
 (defn init []
   (println ::events/initialize-db)
-  (re-frame/dispatch-sync [::events/initialize-db])
+  (rf/dispatch-sync [::events/initialize-db])
   (dev-setup)
   (mount-root))

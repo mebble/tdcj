@@ -12,9 +12,9 @@
 
     ;; We can subscribe to each todo:
     ;; https://github.com/reagent-project/reagent/issues/18#issuecomment-51316043
-    (doall (for [i (range @(rf/subscribe [::subs/num-todos]))] 
-             (let [t @(rf/subscribe [::subs/todo i])] 
-               ^{:key (:id t)} [:li {:data-id (:id t)} 
+    (doall (for [i (range @(rf/subscribe [::subs/num-todos]))]
+             (let [t @(rf/subscribe [::subs/todo i])]
+               ^{:key (:id t)} [:li {:data-id (:id t)}
                                 (if-not (:editing t)
                                   (:txt t)
                                   [:input {:type "text"
@@ -28,9 +28,15 @@
                                          :value (:done t)
                                          :on-click #(rf/dispatch [::events/strike-todo i])}]
                                 (when (:done t) "DONE")])))
-    
-    ;; Alternatively we can subscribe to all todos:
-    #_(for [t @(rf/subscribe [::subs/todos])] 
-        ^{:key (:id t)} [:li {:data-id (:id t)} (:txt t)])]
 
-    [:button {:on-click #(rf/dispatch [::events/add-todo (rand-nth ["one" "two" "three"])])} "Add Todo Item"]])
+    ;; Alternatively we can subscribe to all todos:
+    #_(for [t @(rf/subscribe [::subs/todos])]
+        ^{:key (:id t)} [:li {:data-id (:id t)} (:txt t)])]
+   (let [new-todo-txt @(rf/subscribe [::subs/new-todo-txt])]
+     [:form {:on-submit (fn [e]
+                          (.preventDefault e)
+                          (rf/dispatch [::events/add-todo new-todo-txt]))}
+      [:input {:type "text"
+               :value new-todo-txt
+               :on-input #(rf/dispatch [::events/edit-new-todo (-> % .-target .-value)])}]
+      [:button {:type "submit"} "Add Todo Item"]])])
