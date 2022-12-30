@@ -52,9 +52,3 @@
  ::edit-new-todo
  (fn [db [_ val]]
    (assoc db :new-todo-txt val)))
-
-(rf/reg-event-db
- ::inc
- [rf/debug]
- (fn [db _]
-   (update db :count inc)))
