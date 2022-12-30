@@ -8,6 +8,13 @@
   [pos coll]
   (into (subvec coll 0 pos) (subvec coll (inc pos))))
 
+(def todo->local-store (rf/after (fn [db [event-name payload]]
+                                (let [todo (case event-name 
+                                             ::add-todo    (-> db :todos last) 
+                                             ::strike-todo (-> db :todos (nth payload)))]
+                                  (when todo
+                                    (db/set-local (->> todo :id (str "todo:")) todo))))))
+
 (rf/reg-event-db
  ::initialize-db
  (fn [_ _]
@@ -15,6 +22,7 @@
 
 (rf/reg-event-db
   ::add-todo
+ [todo->local-store]
  (fn [db [_ todo]]
    (-> db
        (update :todos (fn [todos] (conj todos {:txt todo
@@ -31,6 +39,7 @@
 
 (rf/reg-event-db
  ::strike-todo
+ [todo->local-store]
  (fn [db [_ i]]
    (update-in db
            [:todos i :done]
