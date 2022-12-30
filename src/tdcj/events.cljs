@@ -1,12 +1,21 @@
 (ns tdcj.events
   (:require
+   [cljs.reader :refer [read-string]]
    [re-frame.core :as rf]
    [tdcj.db :as db]))
 
-(defn vec-remove
+(defn- vec-remove
   "remove elem in coll (https://stackoverflow.com/a/18319708/5811761)"
   [pos coll]
   (into (subvec coll 0 pos) (subvec coll (inc pos))))
+
+(def todo-ids-key "meta:ids")
+
+(defn- get-todo-ids []
+  (let [res (db/get-local todo-ids-key)]
+    (if res
+      (read-string res)
+      [])))
 
 (def todo->local-store
   (rf/->interceptor
@@ -70,4 +79,5 @@
 (rf/reg-fx
  ::store-todo
  (fn [[id-str todo]]
-   (db/set-local id-str todo)))
+   (db/set-local id-str todo)
+   (db/set-local todo-ids-key (conj (get-todo-ids) id-str))))
