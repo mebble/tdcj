@@ -17,6 +17,7 @@
                   todo (case event-name
                          ::add-todo    (-> new-db :todos last)
                          ::strike-todo (-> new-db :todos (nth payload))
+                         ::edit-todo   (-> new-db :todos (nth payload) (#(when-not (:editing %) %)))
                          ::remove-todo (-> old-db :todos (nth payload)))]
               (if todo
                 (let [id-str (->> todo :id (str "todo:"))]
@@ -62,6 +63,7 @@
 
 (rf/reg-event-db
  ::edit-todo
+ [todo->local-store]
  (fn [db [_ i]]
    (update-in db
               [:todos i :editing]
