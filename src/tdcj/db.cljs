@@ -2,7 +2,6 @@
   (:require [cljs.reader :refer [read-string]]))
 
 (defn init-db [init-todos]
-  (println init-todos)
   {:todos init-todos
    :count (->> init-todos 
                (apply max-key :id)
@@ -14,7 +13,10 @@
   (.setItem js/localStorage key val))
 
 (defn get-local [key]
-  (.getItem js/localStorage key val))
+  (.getItem js/localStorage key))
+
+(defn remove-local [key]
+  (.removeItem js/localStorage key))
 
 (def todo-ids-key "meta:ids")
 

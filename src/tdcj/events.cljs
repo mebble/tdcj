@@ -12,12 +12,17 @@
   (rf/->interceptor
    :after (fn [ctx]
             (let [[event-name payload] (-> ctx :coeffects :event) 
-                  db (rf/get-effect ctx :db)
+                  old-db (rf/get-coeffect ctx :db)
+                  new-db (rf/get-effect ctx :db)
                   todo (case event-name
-                         ::add-todo    (-> db :todos last)
-                         ::strike-todo (-> db :todos (nth payload)))]
+                         ::add-todo    (-> new-db :todos last)
+                         ::strike-todo (-> new-db :todos (nth payload))
+                         ::remove-todo (-> old-db :todos (nth payload)))]
               (if todo
-                (rf/assoc-effect ctx ::store-todo [(->> todo :id (str "todo:")) todo])
+                (let [id-str (->> todo :id (str "todo:"))]
+                  (case event-name
+                    ::remove-todo   (rf/assoc-effect ctx ::delete-todo-store id-str)
+                    (rf/assoc-effect ctx ::put-todo-store [id-str todo])))
                 ctx)))))
 
 (rf/reg-event-db
@@ -43,6 +48,7 @@
 
 (rf/reg-event-db
  ::remove-todo
+ [todo->local-store]
  (fn [db [_ i]]
    (update db :todos (fn [todos] (vec-remove i todos)))))
 
@@ -72,9 +78,20 @@
    (assoc db :new-todo-txt val)))
 
 (rf/reg-fx
- ::store-todo
+ ::put-todo-store
  (fn [[id-str todo]]
    (db/set-local id-str todo)
    (let [existing-ids (db/get-todo-ids)]
      (when-not (some #{id-str} existing-ids)
        (db/set-local db/todo-ids-key (conj existing-ids id-str))))))
+
+(rf/reg-fx
+ ::delete-todo-store
+ (fn [id-str]
+   (let [existing-ids (db/get-todo-ids)]
+     (when (some #{id-str} existing-ids)
+       (->> existing-ids
+            (remove #{id-str})
+            (vec)
+            (db/set-local db/todo-ids-key))))
+   (db/remove-local id-str)))
