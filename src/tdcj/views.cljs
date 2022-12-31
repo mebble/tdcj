@@ -6,7 +6,7 @@
 
 (defn checkbox [val on-click]
   [:input {:type "checkbox"
-           :value val
+           :default-checked val
            :on-click on-click}])
 
 (defn textbox [val on-input]

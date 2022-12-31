@@ -23,7 +23,11 @@
 (rf/reg-event-db
  ::initialize-db
  (fn [_ _]
-   db/init-db))
+   (->> (db/get-todo-ids)
+        (map (partial db/get-todo))
+        (remove nil?)
+        (vec)
+        (db/init-db))))
 
 (rf/reg-event-db
   ::add-todo

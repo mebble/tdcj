@@ -1,9 +1,13 @@
 (ns tdcj.db
   (:require [cljs.reader :refer [read-string]]))
 
-(def init-db
-  {:todos []
-   :count 0
+(defn init-db [init-todos]
+  (println init-todos)
+  {:todos init-todos
+   :count (->> init-todos 
+               (apply max-key :id)
+               (#(if (nil? %) 0 (:id %)))
+               (inc))
    :new-todo-txt ""})
 
 (defn set-local [key val]
@@ -19,3 +23,6 @@
     (if res
       (read-string res)
       [])))
+
+(defn get-todo [id]
+  (some-> (get-local id) read-string))
