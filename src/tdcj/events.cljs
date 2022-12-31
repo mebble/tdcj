@@ -20,10 +20,11 @@
                          ::edit-todo   (-> new-db :todos (nth payload) (#(when-not (:editing %) %)))
                          ::remove-todo (-> old-db :todos (nth payload)))]
               (if todo
-                (let [id-str (->> todo :id (str "todo:"))]
+                (let [todo-trimmed (dissoc todo :editing)
+                      id-str (->> todo-trimmed :id (str "todo:"))]
                   (case event-name
                     ::remove-todo   (rf/assoc-effect ctx ::delete-todo-store id-str)
-                    (rf/assoc-effect ctx ::put-todo-store [id-str todo])))
+                    (rf/assoc-effect ctx ::put-todo-store [id-str todo-trimmed])))
                 ctx)))))
 
 (rf/reg-event-db
