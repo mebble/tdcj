@@ -9,10 +9,14 @@
            :default-checked val
            :on-click on-click}])
 
-(defn textbox [val on-input]
-  [:input.border {:type "text"
-           :value val
-           :on-input #(-> % .-target .-value on-input)}])
+(defn textbox
+  ([val on-input]
+   [textbox {} val on-input])
+  ([attrs val on-input]
+   [:input.border (merge {:type "text"
+                          :value val
+                          :on-input #(-> % .-target .-value on-input)}
+                         attrs)]))
 
 (defn btn
   [& args]
@@ -37,13 +41,13 @@
     [:form.space-x-2 {:on-submit (fn [e]
                          (.preventDefault e)
                          (rf/dispatch [::events/add-todo new-todo-txt]))}
-     [textbox new-todo-txt #(rf/dispatch [::events/edit-new-todo %])]
-     [btn {:type "submit"} "Add Todo Item"]]))
+     [textbox {:id :new-todo-txt} new-todo-txt #(rf/dispatch [::events/edit-new-todo %])]
+     [btn {:type "submit" :id :new-todo-btn} "Add Todo Item"]]))
 
 (defn main-panel []
   [:div.w-fit.m-auto.mt-20
    [:h1.text-3xl.text-center.mb-4 "Todo App"]
-   [:ul
+   [:ul#todo-list
     ;; We can subscribe to each todo:
     ;; https://github.com/reagent-project/reagent/issues/18#issuecomment-51316043
     (doall (for [i (range @(rf/subscribe [::subs/num-todos]))]

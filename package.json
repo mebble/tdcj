@@ -6,13 +6,15 @@
 		"release": "npx shadow-cljs release app",
 		"build-report": "npx shadow-cljs run shadow.cljs.build-report app target/build-report.html",
 		"tailwind:watch": "npx tailwindcss -i ./resources/public/css/index.css -o ./resources/public/css/compiled/index.css --watch",
-		"tailwind:release": "npx tailwindcss -i ./resources/public/css/index.css -o ./resources/public/css/compiled/index.css --minify"
+		"tailwind:release": "npx tailwindcss -i ./resources/public/css/index.css -o ./resources/public/css/compiled/index.css --minify",
+		"cypress:open": "npx cypress open"
 	},
 	"dependencies": {
 		"react": "17.0.2",
 		"react-dom": "17.0.2"
 	},
 	"devDependencies": {
+		"cypress": "^12.2.0",
 		"shadow-cljs": "2.20.5",
 		"tailwindcss": "^3.2.4"
 	}
