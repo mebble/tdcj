@@ -4,10 +4,14 @@
    [tdcj.subs :as subs]
    [tdcj.events :as events]))
 
-(defn checkbox [val on-click]
-  [:input {:type "checkbox"
-           :default-checked val
-           :on-click on-click}])
+(defn checkbox
+  ([val on-click]
+   [checkbox {} val on-click])
+  ([attrs val on-click]
+   [:input (merge {:type "checkbox"
+                   :default-checked val
+                   :on-click on-click}
+                  attrs)]))
 
 (defn textbox
   ([val on-input]
@@ -26,14 +30,18 @@
   [:img.w-6.h-6 {:src src}])
 
 (defn todo-item [i todo]
-  [:li.flex.justify-center.items-center.space-x-3.mb-3 {:data-id (:id todo)}
+  [:li.flex.justify-center.items-center.space-x-3.mb-3
+   {:data-id (:id todo)
+    :data-is-done (:done todo)}
    (if-not (:editing todo)
      [:span (:txt todo)]
-     [textbox (:txt todo) #(rf/dispatch [::events/change-todo i %])])
-   [checkbox (:editing todo) #(rf/dispatch [::events/edit-todo i])]
-   [btn {:on-click #(rf/dispatch [::events/remove-todo i])}
+     [textbox {:data-input (:id todo)}
+      (:txt todo) #(rf/dispatch [::events/change-todo i %])])
+   [checkbox {:data-edit (:id todo)} (:editing todo) #(rf/dispatch [::events/edit-todo i])]
+   [btn {:data-delete (:id todo)
+         :on-click #(rf/dispatch [::events/remove-todo i])}
     [icon "/icons/trash.svg"]]
-   [checkbox (:done todo) #(rf/dispatch [::events/strike-todo i])]
+   [checkbox {:data-done (:id todo)} (:done todo) #(rf/dispatch [::events/strike-todo i])]
    (when (:done todo) "DONE")])
 
 (defn new-todo []
