@@ -4,10 +4,12 @@
 		"ancient": "clojure -Sdeps '{:deps {com.github.liquidz/antq {:mvn/version \"RELEASE\"}}}' -m antq.core",
 		"watch": "npx shadow-cljs watch app browser-test karma-test",
 		"release": "npx shadow-cljs release app",
+		"test": "npx shadow-cljs release test && node ./target/node-tests.js",
 		"build-report": "npx shadow-cljs run shadow.cljs.build-report app target/build-report.html",
 		"tailwind:watch": "npx tailwindcss -i ./resources/public/css/index.css -o ./resources/public/css/compiled/index.css --watch",
 		"tailwind:release": "npx tailwindcss -i ./resources/public/css/index.css -o ./resources/public/css/compiled/index.css --minify",
-		"cypress:open": "npx cypress open"
+		"cypress:open": "npx cypress open",
+		"cypress:run": "npx cypress run"
 	},
 	"dependencies": {
 		"react": "17.0.2",

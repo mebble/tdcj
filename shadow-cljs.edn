@@ -1,5 +1,6 @@
 ;; Resources:
-;; https://shadow-cljs.github.io/docs/UsersGuide.html#_introduction
+;; Intro: https://shadow-cljs.github.io/docs/UsersGuide.html#_introduction
+;; Testing: https://shadow-cljs.github.io/docs/UsersGuide.html#_testing
 
 {:nrepl {:port 8777}
 
@@ -18,15 +19,16 @@
   8290 "target/browser-test"}
 
  :builds
- {:app
-  {:target     :browser
-   :output-dir "resources/public/js/compiled"
-   :asset-path "/js/compiled"
-   :modules
-   {:app {:init-fn tdcj.core/init}}
-   :devtools
-   {:preloads []}
-   :dev
-   {:compiler-options
-    {:closure-defines
-     { }}}}}}
+ {:app {:target     :browser
+        :output-dir "resources/public/js/compiled"
+        :asset-path "/js/compiled"
+        :modules
+        {:app {:init-fn tdcj.core/init}}
+        :devtools
+        {:preloads []}
+        :dev
+        {:compiler-options
+         {:closure-defines
+          {}}}}
+  :test {:target    :node-test
+         :output-to "target/node-tests.js"}}}
