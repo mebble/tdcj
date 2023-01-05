@@ -2,7 +2,7 @@
 	"name": "tdcj",
 	"scripts": {
 		"ancient": "clojure -Sdeps '{:deps {com.github.liquidz/antq {:mvn/version \"RELEASE\"}}}' -m antq.core",
-		"watch": "npx shadow-cljs watch app browser-test karma-test",
+		"watch": "npx shadow-cljs watch app",
 		"release": "npx shadow-cljs release app",
 		"test": "npx shadow-cljs release test && node ./target/node-tests.js",
 		"build-report": "npx shadow-cljs run shadow.cljs.build-report app target/build-report.html",
