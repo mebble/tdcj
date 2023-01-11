@@ -8,24 +8,55 @@
   [pos coll]
   (into (subvec coll 0 pos) (subvec coll (inc pos))))
 
+(defn todo-store-effect [ctx]
+  (let [[event-name payload] (-> ctx :coeffects :event)
+        old-db (rf/get-coeffect ctx :db)
+        new-db (rf/get-effect ctx :db)
+        todo (case event-name
+               ::add-todo    (-> new-db :todos last)
+               ::strike-todo (-> new-db :todos (nth payload))
+               ::edit-todo   (-> new-db :todos (nth payload) (#(when-not (:editing %) %)))
+               ::remove-todo (-> old-db :todos (nth payload)))]
+    (if todo
+      (let [todo-trimmed (dissoc todo :editing)
+            id-str (->> todo-trimmed :id (str "todo:"))]
+        (case event-name
+          ::remove-todo   (rf/assoc-effect ctx ::delete-todo-store id-str)
+          (rf/assoc-effect ctx ::put-todo-store [id-str todo-trimmed])))
+      ctx)))
+
+(defn add-todo [db [_ todo]]
+  (if (empty? todo)
+    db
+    (-> db
+        (update :todos (fn [todos] (conj todos {:txt todo
+                                                :id (:count db)
+                                                :done false
+                                                :editing false})))
+        (update :count inc)
+        (assoc :new-todo-txt ""))))
+
+(defn remove-todo [db [_ i]]
+  (update db :todos (fn [todos] (vec-remove i todos))))
+
+(defn put-todo-store [set-local get-todo-ids [id-str todo]]
+  (set-local id-str todo)
+  (let [existing-ids (get-todo-ids)]
+    (when-not (some #{id-str} existing-ids)
+      (set-local db/todo-ids-key (conj existing-ids id-str)))))
+
+(defn delete-todo-store [set-local remove-local get-todo-ids id-str]
+  (let [existing-ids (get-todo-ids)]
+    (when (some #{id-str} existing-ids)
+      (->> existing-ids
+           (remove #{id-str})
+           (vec)
+           (set-local db/todo-ids-key))
+      (remove-local id-str))))
+
 (def todo->local-store
   (rf/->interceptor
-   :after (fn [ctx]
-            (let [[event-name payload] (-> ctx :coeffects :event) 
-                  old-db (rf/get-coeffect ctx :db)
-                  new-db (rf/get-effect ctx :db)
-                  todo (case event-name
-                         ::add-todo    (-> new-db :todos last)
-                         ::strike-todo (-> new-db :todos (nth payload))
-                         ::edit-todo   (-> new-db :todos (nth payload) (#(when-not (:editing %) %)))
-                         ::remove-todo (-> old-db :todos (nth payload)))]
-              (if todo
-                (let [todo-trimmed (dissoc todo :editing)
-                      id-str (->> todo-trimmed :id (str "todo:"))]
-                  (case event-name
-                    ::remove-todo   (rf/assoc-effect ctx ::delete-todo-store id-str)
-                    (rf/assoc-effect ctx ::put-todo-store [id-str todo-trimmed])))
-                ctx)))))
+   :after todo-store-effect))
 
 (rf/reg-event-db
  ::initialize-db
@@ -39,20 +70,12 @@
 (rf/reg-event-db
   ::add-todo
  [todo->local-store]
- (fn [db [_ todo]]
-   (-> db
-       (update :todos (fn [todos] (conj todos {:txt todo
-                                               :id (:count db)
-                                               :done false
-                                               :editing false})))
-       (update :count inc)
-       (assoc :new-todo-txt ""))))
+ add-todo)
 
 (rf/reg-event-db
  ::remove-todo
  [todo->local-store]
- (fn [db [_ i]]
-   (update db :todos (fn [todos] (vec-remove i todos)))))
+ remove-todo)
 
 (rf/reg-event-db
  ::strike-todo
@@ -82,19 +105,8 @@
 
 (rf/reg-fx
  ::put-todo-store
- (fn [[id-str todo]]
-   (db/set-local id-str todo)
-   (let [existing-ids (db/get-todo-ids)]
-     (when-not (some #{id-str} existing-ids)
-       (db/set-local db/todo-ids-key (conj existing-ids id-str))))))
+ (partial put-todo-store db/set-local db/get-todo-ids))
 
 (rf/reg-fx
  ::delete-todo-store
- (fn [id-str]
-   (let [existing-ids (db/get-todo-ids)]
-     (when (some #{id-str} existing-ids)
-       (->> existing-ids
-            (remove #{id-str})
-            (vec)
-            (db/set-local db/todo-ids-key))))
-   (db/remove-local id-str)))
+ (partial delete-todo-store db/set-local db/remove-local db/get-todo-ids))
