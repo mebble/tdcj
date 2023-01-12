@@ -16,12 +16,13 @@
                ::add-todo    (-> new-db :todos last)
                ::strike-todo (-> new-db :todos (nth payload))
                ::edit-todo   (-> new-db :todos (nth payload) (#(when-not (:editing %) %)))
-               ::remove-todo (-> old-db :todos (nth payload)))]
+               ::remove-todo (-> old-db :todos (nth payload))
+               nil)]
     (if todo
       (let [todo-trimmed (dissoc todo :editing)
             id-str (->> todo-trimmed :id (str "todo:"))]
-        (case event-name
-          ::remove-todo   (rf/assoc-effect ctx ::delete-todo-store id-str)
+        (if (= event-name ::remove-todo)
+          (rf/assoc-effect ctx ::delete-todo-store id-str)
           (rf/assoc-effect ctx ::put-todo-store [id-str todo-trimmed])))
       ctx)))
 
