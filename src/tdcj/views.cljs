@@ -33,10 +33,11 @@
   [:li.flex.justify-center.items-center.space-x-3.mb-3
    {:data-id (:id todo)
     :data-is-done (:done todo)}
-   (if-not (:editing todo)
-     [:span (:txt todo)]
-     [textbox {:data-input (:id todo)}
-      (:txt todo) #(rf/dispatch [::events/change-todo i %])])
+   [:div.txt
+    (if-not (:editing todo)
+      [:span (:txt todo)]
+      [textbox {:data-input (:id todo)}
+       (:txt todo) #(rf/dispatch [::events/change-todo i %])])]
    [checkbox {:data-edit (:id todo)} (:editing todo) #(rf/dispatch [::events/edit-todo i])]
    [btn {:data-delete (:id todo)
          :on-click #(rf/dispatch [::events/remove-todo i])}
