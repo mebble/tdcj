@@ -59,11 +59,14 @@
   (rf/->interceptor
    :after todo-store-effect))
 
+(def get-todo-ids (partial db/get-todo-ids db/get-local))
+(def get-todo (partial db/get-todo db/get-local))
+
 (rf/reg-event-db
  ::initialize-db
  (fn [_ _]
-   (->> (db/get-todo-ids)
-        (map (partial db/get-todo))
+   (->> (get-todo-ids)
+        (map (partial get-todo))
         (remove nil?)
         (vec)
         (db/init-db))))
@@ -106,8 +109,8 @@
 
 (rf/reg-fx
  ::put-todo-store
- (partial put-todo-store db/set-local db/get-todo-ids))
+ (partial put-todo-store db/set-local get-todo-ids))
 
 (rf/reg-fx
  ::delete-todo-store
- (partial delete-todo-store db/set-local db/remove-local db/get-todo-ids))
+ (partial delete-todo-store db/set-local db/remove-local get-todo-ids))
