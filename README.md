@@ -1,5 +1,7 @@
 # tdcj
 
+[![Netlify Status](https://api.netlify.com/api/v1/badges/2c87f293-8565-471d-984e-dbd849493b32/deploy-status)](https://app.netlify.com/sites/tdcj/deploys)
+
 ***Scaffolded with `lein new re-frame tdcj`***
 
 A [re-frame](https://github.com/day8/re-frame) todo app.
