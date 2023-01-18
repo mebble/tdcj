@@ -8,10 +8,12 @@
   ([val on-click]
    [checkbox {} val on-click])
   ([attrs val on-click]
-   [:input.shrink-0 (merge {:type "checkbox"
-                   :default-checked val
-                   :on-click on-click}
-                  attrs)]))
+   [:input.shrink-0
+    (merge {:type "checkbox" 
+            :default-checked val
+            :checked val
+            :on-click on-click} 
+           attrs)]))
 
 (defn textbox
   ([val on-input]
@@ -37,8 +39,12 @@
    [:div.txt.grow.overflow-x-auto {:class (when (:done todo) "line-through")}
     (if-not (:editing todo)
       [:span (:txt todo)]
-      [textbox {:class "w-full" :data-input (:id todo)}
-       (:txt todo) #(rf/dispatch [::events/change-todo i %])])]
+      [:form
+       {:on-submit (fn [e]
+                     (.preventDefault e)
+                     (rf/dispatch [::events/edit-todo i]))}
+       [textbox {:class "w-full" :data-input (:id todo)}
+        (:txt todo) #(rf/dispatch [::events/change-todo i %])]])]
    [checkbox {:data-edit (:id todo)} (:editing todo) #(rf/dispatch [::events/edit-todo i])]
    [btn {:data-delete (:id todo)
          :on-click #(rf/dispatch [::events/remove-todo i])}

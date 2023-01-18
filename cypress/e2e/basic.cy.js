@@ -17,8 +17,10 @@ describe('no todos exist in localstorage', () => {
 
     it('adds and deletes a todo', () => {
         const todo = 'Pay bills'
-        cy.get('#new-todo-txt').type(todo)
-        cy.get('#new-todo-btn').click()
+        cy.get('#new-todo-txt')
+            .type(todo)
+        cy.get('#new-todo-btn')
+            .click()
         cy.get('#todo-list li')
             .should('have.length', 3)
             .last()
@@ -31,7 +33,8 @@ describe('no todos exist in localstorage', () => {
                 expect(localStorage.getItem('todo:3')).to.not.be.null
             })
 
-        cy.get('[data-delete=1]').click()
+        cy.get('[data-delete=1]')
+            .click()
         cy.get('#todo-list li')
             .should('have.length', 2)
             .first()
@@ -46,7 +49,8 @@ describe('no todos exist in localstorage', () => {
     })
 
     it('checks off a todo', () => {
-        cy.get('[data-done=1]').click()
+        cy.get('[data-done=1]')
+            .click()
         cy.get('#todo-list li')
             .should('have.length', 2)
             .first()
@@ -58,7 +62,8 @@ describe('no todos exist in localstorage', () => {
                 expect(localStorage.getItem('todo:2')).to.contain(':done false')
             })
 
-        cy.get('[data-done=1]').click()
+        cy.get('[data-done=1]')
+            .click()
         cy.get('#todo-list li')
             .should('have.length', 2)
             .first()
@@ -75,7 +80,8 @@ describe('no todos exist in localstorage', () => {
         const oldText = existingTodos[0];
         const newText = 'Feed the dog';
 
-        cy.get('[data-edit=1]').click()
+        cy.get('[data-edit=1]')
+            .click()
             .should('be.checked')
             .parent()
             .should('not.have.text', oldText)
@@ -92,7 +98,8 @@ describe('no todos exist in localstorage', () => {
                 expect(localStorage.getItem('todo:1')).to.contain(`:txt "${oldText}"`)
             })
 
-        cy.get('[data-edit=1]').click()
+        cy.get('[data-edit=1]')
+            .click()
             .should('not.be.checked')
             .parent()
             .should('have.text', newText)
@@ -101,6 +108,29 @@ describe('no todos exist in localstorage', () => {
                 expect(localStorage.getItem('meta:ids')).to.eq(expectedMeta)
                 expect(localStorage.getItem('todo:1')).to.contain(`:txt "${newText}"`)
             })
+
+        cy.get('[data-input=1]')
+            .should('not.exist')
+    })
+
+    it('enters an edited todo on enter keypress', () => {
+        const oldText = existingTodos[0];
+        const newText = 'Feed the dog';
+
+        cy.get('[data-edit=1]')
+            .click()
+            .should('be.checked')
+            .parent()
+            .should('not.have.text', oldText)
+
+        cy.get('[data-input=1]')
+            .should('have.value', oldText)
+            .type('{backspace}{backspace}{backspace}dog{enter}')
+
+        cy.get('[data-edit=1]')
+            .should('not.be.checked')
+            .parent()
+            .should('have.text', newText)
 
         cy.get('[data-input=1]')
             .should('not.exist')
