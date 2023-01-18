@@ -101,7 +101,7 @@ browser test runner and karma test runner with hot reload:
 
 ```sh
 npm install
-npx shadow-cljs watch app
+npm run app:watch
 ```
 
 Please be patient; it may take over 20 seconds to see any output, and over 40 seconds to complete.
@@ -192,7 +192,6 @@ Build the app with the `prod` profile:
 
 ```sh
 npm install
-npm run tailwind:release
 npm run release
 ```
 
