@@ -10,9 +10,8 @@
   ([attrs val on-click]
    [:input.shrink-0
     (merge {:type "checkbox" 
-            :default-checked val
             :checked val
-            :on-click on-click} 
+            :on-change on-click} 
            attrs)]))
 
 (defn textbox
