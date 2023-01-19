@@ -26,7 +26,7 @@
 
 (defn btn
   [& args]
-  (apply vector :button.shrink-0.border.border-black.rounded.p-1.bg-gray-200 args))
+  (apply vector :button.shrink-0.border.border-black.rounded.p-1.bg-gray-200.disabled:bg-gray-100.disabled:text-gray-400.disabled:border-gray-400 args))
 
 (defn icon [src]
   [:img.w-4.h-4 {:src src}])
@@ -52,7 +52,7 @@
 
 (defn new-todo []
   (let [new-todo-txt @(rf/subscribe [::subs/new-todo-txt])]
-    [:form.flex.justify-between.space-x-2
+    [:form.flex.justify-between.space-x-2.mb-4
      {:on-submit (fn [e]
                    (.preventDefault e) 
                    (rf/dispatch [::events/add-todo new-todo-txt]))}
@@ -75,4 +75,11 @@
     ;; Alternatively we can subscribe to all todos: 
       #_(for [t @(rf/subscribe [::subs/todos])]
           ^{:key (:id t)} [:li {:data-id (:id t)} (:txt t)])])
-   [new-todo]])
+   [new-todo]
+   [:div.flex.justify-between
+    [btn {:id :undo-btn
+          :disabled (not @(rf/subscribe [:undos?]))
+          :on-click #(rf/dispatch [:undo])} "Undo"]
+    [btn {:id :redo-btn
+          :disabled (not @(rf/subscribe [:redos?]))
+          :on-click #(rf/dispatch [:redo])} "Redo"]]])

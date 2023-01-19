@@ -1,6 +1,7 @@
 (ns tdcj.events
   (:require
    [re-frame.core :as rf]
+   [day8.re-frame.undo :refer [undoable]]
    [tdcj.db :as db]))
 
 (defn- vec-remove
@@ -73,17 +74,17 @@
 
 (rf/reg-event-db
   ::add-todo
- [todo->local-store]
+ [(undoable "Undo add item") todo->local-store]
  add-todo)
 
 (rf/reg-event-db
  ::remove-todo
- [todo->local-store]
+ [(undoable "Undo remove item") todo->local-store]
  remove-todo)
 
 (rf/reg-event-db
  ::strike-todo
- [todo->local-store]
+ [(undoable "Undo strike todo") todo->local-store]
  (fn [db [_ i]]
    (update-in db
            [:todos i :done]

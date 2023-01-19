@@ -1,11 +1,11 @@
 /// <reference types="cypress" />
 
-describe('no todos exist in localstorage', () => {
-    const existingTodos = [
-        'Feed the cat',
-        'Do dishes',
-    ];
+const existingTodos = [
+    'Feed the cat',
+    'Do dishes',
+];
 
+describe('no todos exist in localstorage', () => {
     beforeEach(() => {
         cy.visit('/')
         cy.get('#new-todo-txt').type(existingTodos[0])
@@ -157,5 +157,91 @@ describe('some todos exist in localstorage', () => {
             .should('have.attr', 'data-is-done', 'true')
             .find('.txt')
             .should('have.text', 'sleep')
+    })
+})
+
+describe('undo and redo', () => {
+    beforeEach(() => {
+        cy.visit('/')
+    })
+
+    it('undo/redo buttons disable property', () => {
+        cy.get('#undo-btn').should('be.disabled')
+        cy.get('#redo-btn').should('be.disabled')
+
+        cy.get('#new-todo-txt').type('Some new todo')
+        cy.get('#new-todo-btn').click()
+
+        cy.get('#undo-btn').should('not.be.disabled')
+        cy.get('#redo-btn').should('be.disabled')
+
+        cy.get('#undo-btn').click()
+        cy.get('#redo-btn').should('not.be.disabled')
+    })
+
+    describe('undo/redo after some action is performed', () => {
+        beforeEach(() => {
+            cy.get('#new-todo-txt').type(existingTodos[0])
+            cy.get('#new-todo-btn').click()
+        })
+
+        it('add todo action', () => {
+            const todoTxt = 'Second todo item'
+            cy.get('#new-todo-txt').type(todoTxt)
+            cy.get('#new-todo-btn').click()
+
+            cy.get('#undo-btn').click()
+
+            cy.get('#todo-list li')
+                .should('have.length', 1)
+                .first()
+                .should('have.text', existingTodos[0])
+
+            cy.get('#redo-btn').click()
+
+            cy.get('#todo-list li')
+                .should('have.length', 2)
+                .last()
+                .should('have.text', todoTxt)
+        })
+
+        it('delete todo action', () => {
+            cy.get('[data-delete=1]').click()
+
+            cy.get('#todo-list li')
+                .should('have.length', 0)
+
+            cy.get('#undo-btn').click()
+
+            cy.get('#todo-list li')
+                .should('have.length', 1)
+                .first()
+                .should('have.text', existingTodos[0])
+
+            cy.get('#redo-btn').click()
+
+            cy.get('#todo-list li')
+                .should('have.length', 0)
+        })
+
+        it('done todo action', () => {
+            cy.get('[data-done=1]').click()
+
+            cy.get('#todo-list li')
+                .first()
+                .should('have.attr', 'data-is-done', "true")
+
+            cy.get('#undo-btn').click()
+
+            cy.get('#todo-list li')
+                .first()
+                .should('have.attr', 'data-is-done', "false")
+
+            cy.get('#redo-btn').click()
+
+            cy.get('#todo-list li')
+                .first()
+                .should('have.attr', 'data-is-done', "true")
+        })
     })
 })
