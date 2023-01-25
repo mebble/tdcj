@@ -20,5 +20,5 @@ import './commands'
 // require('./commands')
 
 Cypress.Keyboard.defaults({
-    keystrokeDelay: 20
+    keystrokeDelay: 30
 })

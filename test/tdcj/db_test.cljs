@@ -22,7 +22,7 @@
     (is (= {:txt :val :id :val :done :val} (db/get-todo get-local "id")))))
 
 (deftest test-init-db
-  (is (= {:new-todo-txt "" :count 1 :todos []}
+  (is (= {:new-todo-txt "" :count 1 :prev-event nil :todos []}
          (db/init-db [])))
-  (is (= {:new-todo-txt "" :count 6 :todos [{:id 2} {:id 5}]}
+  (is (= {:new-todo-txt "" :count 6 :prev-event nil :todos [{:id 2} {:id 5}]}
          (db/init-db [{:id 2} {:id 5}]))))

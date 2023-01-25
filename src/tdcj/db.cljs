@@ -22,7 +22,8 @@
                (apply max-key :id)
                (#(if (nil? %) 0 (:id %)))
                (inc))
-   :new-todo-txt ""})
+   :new-todo-txt ""
+   :prev-event nil})
 
 (defn get-todo-ids [get-local]
   (let [res (get-local todo-ids-key)]

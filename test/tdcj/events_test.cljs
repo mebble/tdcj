@@ -92,7 +92,7 @@
 (deftest fx-put-todo-store
   (let [set-local (spy/spy)
         get-todo-ids (spy/stub ["id1" "id2"])
-        put-todo-store (partial e/put-todo-store set-local get-todo-ids)]
+        put-todo-store (partial e/put-todo-store* set-local get-todo-ids)]
 
     (testing "todo in store"
       (put-todo-store ["id2" 'todo])
@@ -109,7 +109,7 @@
   (let [set-local (spy/spy)
         remove-local (spy/spy)
         get-todo-ids (spy/stub ["id1" "id2" "id3"])
-        delete-todo-store (partial e/delete-todo-store set-local remove-local get-todo-ids)]
+        delete-todo-store (partial e/delete-todo-store* set-local remove-local get-todo-ids)]
 
     (testing "todo in store"
       (delete-todo-store "id1")

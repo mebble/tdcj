@@ -1,6 +1,7 @@
 (ns tdcj.events
   (:require
    [re-frame.core :as rf]
+   [re-frame.db :refer [app-db]]
    [day8.re-frame.undo :refer [undoable]]
    [tdcj.db :as db]))
 
@@ -8,6 +9,49 @@
   "remove elem in coll (https://stackoverflow.com/a/18319708/5811761)"
   [pos coll]
   (into (subvec coll 0 pos) (subvec coll (inc pos))))
+
+(defn- is-event [event-id event]
+  (-> event
+      (first)
+      (= event-id)))
+
+(defn- is-undo-redo [event]
+  (some #(is-event % event) [:undo :redo]))
+
+(defn- is-undoable [event]
+  (some #(is-event % event) [::add-todo ::remove-todo ::strike-todo]))
+
+(defn- set-undo-effects [ctx old-db new-db event prev-event]
+  (let [[event-id _] event
+        [prev-event-id payload] prev-event
+        todo (case [prev-event-id event-id]
+               [::strike-todo :undo] (-> new-db :todos (nth payload))
+               [::strike-todo :redo] (-> new-db :todos (nth payload))
+               [::add-todo    :undo] (-> old-db :todos last)
+               [::add-todo    :redo] (-> new-db :todos last)
+               [::remove-todo :undo] (-> new-db :todos last)
+               [::remove-todo :redo] (-> old-db :todos (nth payload))
+               nil)]
+    (if todo
+      (let [todo-trimmed (dissoc todo :editing)
+            id-str (->> todo-trimmed :id (str "todo:"))]
+        (case [prev-event-id event-id] 
+          [::add-todo    :undo] (rf/assoc-effect ctx ::delete-todo-store id-str)
+          [::remove-todo :redo] (rf/assoc-effect ctx ::delete-todo-store id-str)
+          (rf/assoc-effect ctx ::put-todo-store [id-str todo-trimmed])))
+      ctx)))
+
+(defn undo-redo-effect* [app-db ctx]
+  (let [event (-> ctx :coeffects :event)]
+    (cond
+      (is-undo-redo event) (let [old-db (-> ctx :coeffects :db)
+                                 new-db @app-db    ;; the re-frame.undo lib accesses app-db directly to undo and redo the app state. Hence we have to do the same to get new-db, not through [:effects :db]
+                                 prev-event (if (is-event :undo event)
+                                              (:prev-event old-db)
+                                              (:prev-event new-db))]
+                             (set-undo-effects ctx old-db new-db event prev-event))
+      (is-undoable event)  (assoc-in ctx [:effects :db :prev-event] event)
+      :else                ctx)))
 
 (defn todo-store-effect [ctx]
   (let [[event-name payload] (-> ctx :coeffects :event)
@@ -41,13 +85,13 @@
 (defn remove-todo [db [_ i]]
   (update db :todos (fn [todos] (vec-remove i todos))))
 
-(defn put-todo-store [set-local get-todo-ids [id-str todo]]
+(defn put-todo-store* [set-local get-todo-ids [id-str todo]]
   (set-local id-str todo)
   (let [existing-ids (get-todo-ids)]
     (when-not (some #{id-str} existing-ids)
       (set-local db/todo-ids-key (conj existing-ids id-str)))))
 
-(defn delete-todo-store [set-local remove-local get-todo-ids id-str]
+(defn delete-todo-store* [set-local remove-local get-todo-ids id-str]
   (let [existing-ids (get-todo-ids)]
     (when (some #{id-str} existing-ids)
       (->> existing-ids
@@ -56,12 +100,32 @@
            (set-local db/todo-ids-key))
       (remove-local id-str))))
 
+(def get-todo-ids (partial db/get-todo-ids db/get-local))
+(def get-todo (partial db/get-todo db/get-local))
+(def put-todo-store (partial put-todo-store* db/set-local get-todo-ids))
+(def delete-todo-store (partial delete-todo-store* db/set-local db/remove-local get-todo-ids))
+
+;; Notes
+;; - harvest-fn is run during the following events: every "undoable" event, undo event, redo event 
+;; - reinstate-fn is run during the following events: undo event, redo event
+;; - Inside the reinstate-fn,
+;;   - app-db (a ratom) is the old state (ie before the undo/redo events)
+;;   - db (a would-be value inside app-db) is the new state (ie after the undo/redo events)
+;; (undo-config! {:harvest-fn (fn [app-db] @app-db)
+;;                :reinstate-fn (fn [app-db db]
+;;                                (let [undo-latest-event (:prev-event @app-db)
+;;                                      redo-latest-event (:prev-event db)])
+;;                                (println "app-db" @app-db)
+;;                                (println "db" db)
+;;                                (reset! app-db db))})
+
+(rf/reg-global-interceptor
+ (rf/->interceptor
+  :after (partial undo-redo-effect* app-db)))
+
 (def todo->local-store
   (rf/->interceptor
    :after todo-store-effect))
-
-(def get-todo-ids (partial db/get-todo-ids db/get-local))
-(def get-todo (partial db/get-todo db/get-local))
 
 (rf/reg-event-db
  ::initialize-db
@@ -110,8 +174,8 @@
 
 (rf/reg-fx
  ::put-todo-store
- (partial put-todo-store db/set-local get-todo-ids))
+ put-todo-store)
 
 (rf/reg-fx
  ::delete-todo-store
- (partial delete-todo-store db/set-local db/remove-local get-todo-ids))
+ delete-todo-store)

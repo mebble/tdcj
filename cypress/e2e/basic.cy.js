@@ -196,6 +196,12 @@ describe('undo and redo', () => {
                 .should('have.length', 1)
                 .first()
                 .should('have.text', existingTodos[0])
+                .should(() => {
+                    const expectedMeta = '["todo:1"]'
+                    expect(localStorage.getItem('meta:ids')).to.eq(expectedMeta)
+                    expect(localStorage.getItem('todo:1')).to.not.be.null
+                    expect(localStorage.getItem('todo:2')).to.be.null
+                })
 
             cy.get('#redo-btn').click()
 
@@ -203,13 +209,16 @@ describe('undo and redo', () => {
                 .should('have.length', 2)
                 .last()
                 .should('have.text', todoTxt)
+                .should(() => {
+                    const expectedMeta = '["todo:1" "todo:2"]'
+                    expect(localStorage.getItem('meta:ids')).to.eq(expectedMeta)
+                    expect(localStorage.getItem('todo:1')).to.not.be.null
+                    expect(localStorage.getItem('todo:2')).to.not.be.null
+                })
         })
 
         it('delete todo action', () => {
             cy.get('[data-delete=1]').click()
-
-            cy.get('#todo-list li')
-                .should('have.length', 0)
 
             cy.get('#undo-btn').click()
 
@@ -217,31 +226,103 @@ describe('undo and redo', () => {
                 .should('have.length', 1)
                 .first()
                 .should('have.text', existingTodos[0])
+                .should(() => {
+                    const expectedMeta = '["todo:1"]'
+                    expect(localStorage.getItem('meta:ids')).to.eq(expectedMeta)
+                    expect(localStorage.getItem('todo:1')).to.not.be.null
+                })
 
             cy.get('#redo-btn').click()
 
             cy.get('#todo-list li')
                 .should('have.length', 0)
+                .should(() => {
+                    const expectedMeta = '[]'
+                    expect(localStorage.getItem('meta:ids')).to.eq(expectedMeta)
+                    expect(localStorage.getItem('todo:1')).to.be.null
+                })
         })
 
         it('done todo action', () => {
             cy.get('[data-done=1]').click()
-
-            cy.get('#todo-list li')
-                .first()
-                .should('have.attr', 'data-is-done', "true")
 
             cy.get('#undo-btn').click()
 
             cy.get('#todo-list li')
                 .first()
                 .should('have.attr', 'data-is-done', "false")
+                .should(() => {
+                    expect(localStorage.getItem('todo:1')).to.contain(':done false')
+                })
 
             cy.get('#redo-btn').click()
 
             cy.get('#todo-list li')
                 .first()
                 .should('have.attr', 'data-is-done', "true")
+                .should(() => {
+                    expect(localStorage.getItem('todo:1')).to.contain(':done true')
+                })
+        })
+
+        it('non-undoable event in between two undoable events', () => {
+            const expectThreeTodosInLocal = () => {
+                const expectedMeta = '["todo:1" "todo:2" "todo:3"]'
+                expect(localStorage.getItem('meta:ids')).to.eq(expectedMeta)
+                expect(localStorage.getItem('todo:1')).to.not.be.null
+                expect(localStorage.getItem('todo:2')).to.not.be.null
+                expect(localStorage.getItem('todo:3')).to.not.be.null
+            }
+            const expectTwoTodosInLocal = () => {
+                const expectedMeta = '["todo:1" "todo:2"]'
+                expect(localStorage.getItem('meta:ids')).to.eq(expectedMeta)
+                expect(localStorage.getItem('todo:1')).to.not.be.null
+                expect(localStorage.getItem('todo:2')).to.not.be.null
+                expect(localStorage.getItem('todo:3')).to.be.null
+            }
+            const expectOneTodoInLocal = () => {
+                const expectedMeta = '["todo:1"]'
+                expect(localStorage.getItem('meta:ids')).to.eq(expectedMeta)
+                expect(localStorage.getItem('todo:1')).to.not.be.null
+                expect(localStorage.getItem('todo:2')).to.be.null
+            }
+
+            cy.get('#new-todo-txt').type('Second todo item')
+            cy.get('#new-todo-btn').click()                  // adding is undoable
+            cy.get('#new-todo-txt').type('Third todo item')  // typing a new item is non-undoable
+            cy.get('#new-todo-btn').click()                  // adding is undoable
+
+            cy.get('#undo-btn').click()
+
+            cy.get('#todo-list li')
+                .should('have.length', 2)
+                .first()
+                .should('have.text', existingTodos[0])
+                .should(expectTwoTodosInLocal)
+
+            cy.get('#undo-btn').click()
+
+            cy.get('#todo-list li')
+                .should('have.length', 1)
+                .first()
+                .should('have.text', existingTodos[0])
+                .should(expectOneTodoInLocal)
+
+            cy.get('#redo-btn').click()
+
+            cy.get('#todo-list li')
+                .should('have.length', 2)
+                .last()
+                .should('have.text', 'Second todo item')
+                .should(expectTwoTodosInLocal)
+
+            cy.get('#redo-btn').click()
+
+            cy.get('#todo-list li')
+                .should('have.length', 3)
+                .last()
+                .should('have.text', 'Third todo item')
+                .should(expectThreeTodosInLocal)
         })
     })
 })
