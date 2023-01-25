@@ -28,8 +28,8 @@
   [& args]
   (apply vector :button.shrink-0.border.border-black.rounded.p-1.bg-gray-200.disabled:bg-gray-100.disabled:text-gray-400.disabled:border-gray-400 args))
 
-(defn icon [src]
-  [:img.w-4.h-4 {:src src}])
+(defn icon [icon-file]
+  [:img.w-4.h-4 {:src (str "/icons/" icon-file)}])
 
 (defn todo-item [i todo]
   [:li.flex.justify-end.items-center.space-x-3.px-4.py-2
@@ -47,7 +47,7 @@
    [checkbox {:data-edit (:id todo)} (:editing todo) #(rf/dispatch [::events/edit-todo i])]
    [btn {:data-delete (:id todo)
          :on-click #(rf/dispatch [::events/remove-todo i])}
-    [icon "/icons/trash.svg"]]
+    [icon "trash.svg"]]
    [checkbox {:data-done (:id todo)} (:done todo) #(rf/dispatch [::events/strike-todo i])]])
 
 (defn new-todo []
@@ -57,7 +57,7 @@
                    (.preventDefault e) 
                    (rf/dispatch [::events/add-todo new-todo-txt]))}
      [textbox {:id :new-todo-txt :class "grow border-black"} new-todo-txt #(rf/dispatch [::events/edit-new-todo %])]
-     [btn {:type "submit" :id :new-todo-btn} "Add Todo Item"]]))
+     [btn {:type "submit" :id :new-todo-btn} "Add Todo"]]))
 
 (defn main-panel []
   [:div.w-fit.mx-auto.mt-20.px-6
@@ -76,10 +76,11 @@
       #_(for [t @(rf/subscribe [::subs/todos])]
           ^{:key (:id t)} [:li {:data-id (:id t)} (:txt t)])])
    [new-todo]
-   [:div.flex.justify-between
+   [:div.flex.justify-between.items-center
     [btn {:id :undo-btn
           :disabled (not @(rf/subscribe [:undos?]))
-          :on-click #(rf/dispatch [:undo])} "Undo"]
+          :on-click #(rf/dispatch [:undo])} [icon "undo.svg"]]
+    [:a {:href "https://github.com/mebble/tdcj"} [icon "github.svg"]]
     [btn {:id :redo-btn
           :disabled (not @(rf/subscribe [:redos?]))
-          :on-click #(rf/dispatch [:redo])} "Redo"]]])
+          :on-click #(rf/dispatch [:redo])} [icon "redo.svg"]]]])
