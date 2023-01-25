@@ -218,28 +218,36 @@ describe('undo and redo', () => {
         })
 
         it('delete todo action', () => {
+            cy.get('#new-todo-txt').type('two')
+            cy.get('#new-todo-btn').click()
+
+            // delete at the top or middle of the list (not last)
             cy.get('[data-delete=1]').click()
 
             cy.get('#undo-btn').click()
 
             cy.get('#todo-list li')
-                .should('have.length', 1)
+                .should('have.length', 2)
                 .first()
                 .should('have.text', existingTodos[0])
                 .should(() => {
-                    const expectedMeta = '["todo:1"]'
+                    const expectedMeta = '["todo:2" "todo:1"]'
                     expect(localStorage.getItem('meta:ids')).to.eq(expectedMeta)
                     expect(localStorage.getItem('todo:1')).to.not.be.null
+                    expect(localStorage.getItem('todo:2')).to.not.be.null
                 })
 
             cy.get('#redo-btn').click()
 
             cy.get('#todo-list li')
-                .should('have.length', 0)
+                .should('have.length', 1)
+                .first()
+                .should('have.text', 'two')
                 .should(() => {
-                    const expectedMeta = '[]'
+                    const expectedMeta = '["todo:2"]'
                     expect(localStorage.getItem('meta:ids')).to.eq(expectedMeta)
                     expect(localStorage.getItem('todo:1')).to.be.null
+                    expect(localStorage.getItem('todo:2')).to.not.be.null
                 })
         })
 

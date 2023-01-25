@@ -29,7 +29,7 @@
                [::strike-todo :redo] (-> new-db :todos (nth payload))
                [::add-todo    :undo] (-> old-db :todos last)
                [::add-todo    :redo] (-> new-db :todos last)
-               [::remove-todo :undo] (-> new-db :todos last)
+               [::remove-todo :undo] (-> new-db :todos (nth payload))
                [::remove-todo :redo] (-> old-db :todos (nth payload))
                nil)]
     (if todo
