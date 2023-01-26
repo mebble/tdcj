@@ -21,25 +21,34 @@
 (defn- is-undoable [event]
   (some #(is-event % event) [::add-todo ::remove-todo ::strike-todo]))
 
-(defn- set-undo-effects [ctx old-db new-db event prev-event]
+(defn trim [todo]
+  (dissoc todo :editing))
+
+(defn todo->id-str [todo]
+  (->> todo :id (str "todo:")))
+
+(defn effected-undo-todo [old-db new-db event prev-event]
   (let [[event-id _] event
-        [prev-event-id payload] prev-event
-        todo (case [prev-event-id event-id]
-               [::strike-todo :undo] (-> new-db :todos (nth payload))
-               [::strike-todo :redo] (-> new-db :todos (nth payload))
-               [::add-todo    :undo] (-> old-db :todos last)
-               [::add-todo    :redo] (-> new-db :todos last)
-               [::remove-todo :undo] (-> new-db :todos (nth payload))
-               [::remove-todo :redo] (-> old-db :todos (nth payload))
-               nil)]
-    (if todo
-      (let [todo-trimmed (dissoc todo :editing)
-            id-str (->> todo-trimmed :id (str "todo:"))]
-        (case [prev-event-id event-id] 
-          [::add-todo    :undo] (rf/assoc-effect ctx ::delete-todo-store id-str)
-          [::remove-todo :redo] (rf/assoc-effect ctx ::delete-todo-store id-str)
-          (rf/assoc-effect ctx ::put-todo-store [id-str todo-trimmed])))
-      ctx)))
+        [prev-event-id payload] prev-event]
+    (case [prev-event-id event-id]
+      [::strike-todo :undo] (-> new-db :todos (nth payload))
+      [::strike-todo :redo] (-> new-db :todos (nth payload))
+      [::add-todo    :undo] (-> old-db :todos last)
+      [::add-todo    :redo] (-> new-db :todos last)
+      [::remove-todo :undo] (-> new-db :todos (nth payload))
+      [::remove-todo :redo] (-> old-db :todos (nth payload))
+      nil)))
+
+(defn- set-undo-effects [ctx old-db new-db event prev-event]
+  (if-let [todo (effected-undo-todo old-db new-db event prev-event)]
+    (let [event-id (first event)
+          prev-event-id (first prev-event)
+          id-str (todo->id-str todo)]
+      (case [prev-event-id event-id]
+        [::add-todo    :undo] (rf/assoc-effect ctx ::delete-todo-store id-str)
+        [::remove-todo :redo] (rf/assoc-effect ctx ::delete-todo-store id-str)
+        (rf/assoc-effect ctx ::put-todo-store [id-str (trim todo)])))
+    ctx))
 
 (defn undo-redo-effect* [app-db ctx]
   (let [event (-> ctx :coeffects :event)]
@@ -53,23 +62,25 @@
       (is-undoable event)  (assoc-in ctx [:effects :db :prev-event] event)
       :else                ctx)))
 
-(defn todo-store-effect [ctx]
-  (let [[event-name payload] (-> ctx :coeffects :event)
+(defn effected-todo [ctx]
+  (let [[event-id payload] (-> ctx :coeffects :event)
         old-db (rf/get-coeffect ctx :db)
-        new-db (rf/get-effect ctx :db)
-        todo (case event-name
-               ::add-todo    (-> new-db :todos last)
-               ::strike-todo (-> new-db :todos (nth payload))
-               ::edit-todo   (-> new-db :todos (nth payload) (#(when-not (:editing %) %)))
-               ::remove-todo (-> old-db :todos (nth payload))
-               nil)]
-    (if todo
-      (let [todo-trimmed (dissoc todo :editing)
-            id-str (->> todo-trimmed :id (str "todo:"))]
-        (if (= event-name ::remove-todo)
-          (rf/assoc-effect ctx ::delete-todo-store id-str)
-          (rf/assoc-effect ctx ::put-todo-store [id-str todo-trimmed])))
-      ctx)))
+        new-db (rf/get-effect ctx :db)]
+    (case event-id
+      ::add-todo    (-> new-db :todos last)
+      ::strike-todo (-> new-db :todos (nth payload))
+      ::edit-todo   (-> new-db :todos (nth payload) (#(when-not (:editing %) %)))
+      ::remove-todo (-> old-db :todos (nth payload))
+      nil)))
+
+(defn todo-store-effect [ctx]
+  (if-let [todo (effected-todo ctx)]
+    (let [event-id (-> ctx :coeffects :event first)
+          id-str (todo->id-str todo)]
+      (if (= event-id ::remove-todo)
+        (rf/assoc-effect ctx ::delete-todo-store id-str)
+        (rf/assoc-effect ctx ::put-todo-store [id-str (trim todo)])))
+    ctx))
 
 (defn add-todo [db [_ todo]]
   (if (empty? todo)

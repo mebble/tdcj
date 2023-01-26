@@ -27,8 +27,6 @@
 
 (defn- set-event [ctx e]
   (assoc-in ctx [:coeffects :event] e))
-(defn- set-effect [ctx effect-key effect-val]
-  (assoc-in ctx [:effects effect-key] effect-val))
 
 (deftest event-add-todo
   (testing "empty todo text: does not add a new todo"
@@ -53,41 +51,44 @@
         expected-db (assoc db :todos ['todo1 'todo3])]
     (is (= expected-db (e/remove-todo db ['any 1])))))
 
-(deftest intercept-todo-store-effect
+(deftest test-effected-todo
   (testing "add todo"
     (let [ctx (set-event base-ctx [::e/add-todo 'any])
-          expected (set-effect ctx ::e/put-todo-store ["todo:2" {:id 2
-                                                                 :txt "two"
-                                                                 :done 'any}])]
-      (is (= expected (e/todo-store-effect ctx)))))
+          expected {:id 2
+                    :txt "two"
+                    :done 'any
+                    :editing 'any}]
+      (is (= expected (e/effected-todo ctx)))))
   (testing "strike todo"
-    (let [index 0
-          ctx (set-event base-ctx [::e/strike-todo index])
-          expected (set-effect ctx ::e/put-todo-store ["todo:1" {:id 1
-                                                                 :txt "one new"
-                                                                 :done 'any}])]
-      (is (= expected (e/todo-store-effect ctx)))))
+    (let [ctx (set-event base-ctx [::e/strike-todo 0])
+          expected {:id 1
+                    :txt "one new"
+                    :done 'any
+                    :editing 'any}]
+      (is (= expected (e/effected-todo ctx)))))
   (testing "edit todo"
     (let [set-editing (fn [ctx val] (assoc-in ctx [:effects :db :todos 0 :editing] val))
-          index 0
-          ctx (set-event base-ctx [::e/edit-todo index])]
+          ctx (set-event base-ctx [::e/edit-todo 0])]
       (let [ctx (set-editing ctx false)
-            expected (set-effect ctx ::e/put-todo-store ["todo:1" {:id 1
-                                                                   :txt "one new"
-                                                                   :done 'any}])]
-        (is (= expected (e/todo-store-effect ctx))))
+            expected {:id 1
+                      :txt "one new"
+                      :done 'any
+                      :editing false}]
+        (is (= expected (e/effected-todo ctx))))
       (let [ctx (set-editing ctx true)
-            expected ctx]
-        (is (= expected (e/todo-store-effect ctx))))))
+            expected nil]
+        (is (= expected (e/effected-todo ctx))))))
   (testing "remove todo"
-    (let [index 0
-          ctx (set-event base-ctx [::e/remove-todo index])
-          expected (set-effect ctx ::e/delete-todo-store "todo:0")]
-      (is (= expected (e/todo-store-effect ctx)))))
+    (let [ctx (set-event base-ctx [::e/remove-todo 0])
+          expected {:id 0
+                    :txt "zero"
+                    :done 'any
+                    :editing 'any}]
+      (is (= expected (e/effected-todo ctx)))))
   (testing "unknown event"
     (let [ctx (set-event base-ctx [:unknown 'any])
-          expected ctx]
-      (is (= expected (e/todo-store-effect ctx))))))
+          expected nil]
+      (is (= expected (e/effected-todo ctx))))))
 
 (deftest fx-put-todo-store
   (let [set-local (spy/spy)
@@ -122,3 +123,9 @@
       (delete-todo-store "idx")
       (is (spy/not-called? remove-local))
       (is (spy/not-called? set-local)))))
+
+(deftest test-trim
+  (is (= {:any 'any} (e/trim {:any 'any :editing 'any}))))
+
+(deftest test-todo->id-str
+  (is (= "todo:123" (e/todo->id-str {:any 'any :id 123}))))
