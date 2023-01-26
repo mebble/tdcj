@@ -2,10 +2,10 @@
   (:require
    [reagent.dom :as rdom]
    [re-frame.core :as rf]
-   [tdcj.events :as events]
+   [tdcj.init] ;; init the handlers, effects and subscriptions
+   [tdcj.ids :as i]
    [tdcj.views :as views]
    [tdcj.config :as config]))
-
 
 (defn dev-setup []
   (when config/debug?
@@ -18,6 +18,6 @@
     (rdom/render [views/main-panel] root-el)))
 
 (defn init []
-  (rf/dispatch-sync [::events/initialize-db])
+  (rf/dispatch-sync [::i/initialize-db])
   (dev-setup)
   (mount-root))

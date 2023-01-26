@@ -1,8 +1,7 @@
 (ns tdcj.views
   (:require
    [re-frame.core :as rf]
-   [tdcj.subs :as subs]
-   [tdcj.events :as events]))
+   [tdcj.ids :as i]))
 
 (defn checkbox
   ([val on-click]
@@ -41,22 +40,22 @@
       [:form
        {:on-submit (fn [e]
                      (.preventDefault e)
-                     (rf/dispatch [::events/edit-todo i]))}
+                     (rf/dispatch [::i/edit-todo i]))}
        [textbox {:class "w-full" :data-input (:id todo)}
-        (:txt todo) #(rf/dispatch [::events/change-todo i %])]])]
-   [checkbox {:data-edit (:id todo)} (:editing todo) #(rf/dispatch [::events/edit-todo i])]
+        (:txt todo) #(rf/dispatch [::i/change-todo i %])]])]
+   [checkbox {:data-edit (:id todo)} (:editing todo) #(rf/dispatch [::i/edit-todo i])]
    [btn {:data-delete (:id todo)
-         :on-click #(rf/dispatch [::events/remove-todo i])}
+         :on-click #(rf/dispatch [::i/remove-todo i])}
     [icon "trash.svg"]]
-   [checkbox {:data-done (:id todo)} (:done todo) #(rf/dispatch [::events/strike-todo i])]])
+   [checkbox {:data-done (:id todo)} (:done todo) #(rf/dispatch [::i/strike-todo i])]])
 
 (defn new-todo []
-  (let [new-todo-txt @(rf/subscribe [::subs/new-todo-txt])]
+  (let [new-todo-txt @(rf/subscribe [::i/new-todo-txt])]
     [:form.flex.justify-between.space-x-2.mb-4
      {:on-submit (fn [e]
                    (.preventDefault e) 
-                   (rf/dispatch [::events/add-todo new-todo-txt]))}
-     [textbox {:id :new-todo-txt :class "grow border-black"} new-todo-txt #(rf/dispatch [::events/edit-new-todo %])]
+                   (rf/dispatch [::i/add-todo new-todo-txt]))}
+     [textbox {:id :new-todo-txt :class "grow border-black"} new-todo-txt #(rf/dispatch [::i/edit-new-todo %])]
      [btn {:type "submit" :id :new-todo-btn} "Add Todo"]]))
 
 (defn main-panel []
@@ -64,16 +63,16 @@
    [:h1.text-4xl.text-center.mb-4
     [:span.font-black "Todo"]
     [:span.font-extralight "App"]]
-   (if (zero? @(rf/subscribe [::subs/num-todos]))
+   (if (zero? @(rf/subscribe [::i/num-todos]))
      [:p.text-center.h-16.mb-4.flex.flex-col.justify-center "Add a todo below"]
      [:ul#todo-list.border.border-black.rounded-sm.divide-y.divide-black.mb-4
       ;; We can subscribe to each todo:
       ;; https://github.com/reagent-project/reagent/issues/18#issuecomment-51316043
-      (doall (for [i (range @(rf/subscribe [::subs/num-todos]))]
-               (let [t @(rf/subscribe [::subs/todo i])]
+      (doall (for [i (range @(rf/subscribe [::i/num-todos]))]
+               (let [t @(rf/subscribe [::i/todo i])]
                  ^{:key (:id t)} [todo-item i t])))
     ;; Alternatively we can subscribe to all todos: 
-      #_(for [t @(rf/subscribe [::subs/todos])]
+      #_(for [t @(rf/subscribe [::i/todos])]
           ^{:key (:id t)} [:li {:data-id (:id t)} (:txt t)])])
    [new-todo]
    [:div.flex.justify-between.items-center
