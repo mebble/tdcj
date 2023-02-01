@@ -113,6 +113,26 @@ describe('no todos exist in localstorage', () => {
             .should('not.exist')
     })
 
+    it.skip('edits the middle of a todo text', () => {
+        const oldText = existingTodos[0];
+        const newText = 'Lastly Feed the cat';
+
+        cy.get('[data-edit=1]')
+            .click()
+
+        cy.get('[data-input=1]')
+            .should('have.value', oldText)
+            .type('{moveToStart}Lastly ')
+
+        cy.get('[data-input=1]')
+            .should('have.value', newText)
+
+        cy.get('[data-edit=1]')
+            .click()
+            .parent()
+            .should('have.text', newText)
+    })
+
     it('enters an edited todo on enter keypress', () => {
         const oldText = existingTodos[0];
         const newText = 'Feed the dog';
