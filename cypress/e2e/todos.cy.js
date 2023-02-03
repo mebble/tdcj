@@ -5,7 +5,45 @@ const existingTodos = [
     'Do dishes',
 ];
 
-describe('no todos exist in localstorage', () => {
+describe('app start', () => {
+    beforeEach(() => {
+        cy.visit('/')
+    })
+
+    describe('no todos exist in localstorage', () => {
+        it('prompts the user', () => {
+            cy.get('#todo-list')
+                .should('not.exist')
+            cy.get('#prompt')
+                .should('include.text', 'Add a todo')
+        })
+    })
+
+    describe('some todos exist in localstorage', () => {
+        beforeEach(() => {
+            cy.visit('/')
+            localStorage.setItem('meta:ids', '["todo:100" "todo:200"]')
+            localStorage.setItem('todo:100', '{:txt "eat" :id 100 :done false}')
+            localStorage.setItem('todo:200', '{:txt "sleep" :id 200 :done true}')
+        })
+
+        it('loads the localstorage todos', () => {
+            cy.get('#todo-list li')
+                .should('have.length', 2)
+
+            cy.get('[data-id=100]')
+                .should('have.attr', 'data-is-done', 'false')
+                .find('.txt')
+                .should('have.text', 'eat')
+            cy.get('[data-id=200]')
+                .should('have.attr', 'data-is-done', 'true')
+                .find('.txt')
+                .should('have.text', 'sleep')
+        })
+    })
+})
+
+describe('core actions', () => {
     beforeEach(() => {
         cy.visit('/')
         cy.get('#new-todo-txt').type(existingTodos[0])
@@ -157,30 +195,7 @@ describe('no todos exist in localstorage', () => {
     })
 })
 
-describe('some todos exist in localstorage', () => {
-    beforeEach(() => {
-        cy.visit('/')
-        localStorage.setItem('meta:ids', '["todo:100" "todo:200"]')
-        localStorage.setItem('todo:100', '{:txt "eat" :id 100 :done false}')
-        localStorage.setItem('todo:200', '{:txt "sleep" :id 200 :done true}')
-    })
-
-    it('loads the localstorage todos', () => {
-        cy.get('#todo-list li')
-            .should('have.length', 2)
-
-        cy.get('[data-id=100]')
-            .should('have.attr', 'data-is-done', 'false')
-            .find('.txt')
-            .should('have.text', 'eat')
-        cy.get('[data-id=200]')
-            .should('have.attr', 'data-is-done', 'true')
-            .find('.txt')
-            .should('have.text', 'sleep')
-    })
-})
-
-describe('undo and redo', () => {
+describe('undo and redo actions', () => {
     beforeEach(() => {
         cy.visit('/')
     })

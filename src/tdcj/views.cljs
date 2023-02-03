@@ -84,7 +84,7 @@
     [:span.font-black "Todo"]
     [:span.font-extralight "App"]]
    (if (zero? @(rf/subscribe [::i/num-todos]))
-     [:p.text-center.h-16.mb-4.flex.flex-col.justify-center "Add a todo below"]
+     [:p#prompt.text-center.h-16.mb-4.flex.flex-col.justify-center "Add a todo below"]
      [:ul#todo-list.border.border-black.rounded-sm.divide-y.divide-black.mb-4
       ;; We can subscribe to each todo:
       ;; https://github.com/reagent-project/reagent/issues/18#issuecomment-51316043
