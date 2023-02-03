@@ -113,7 +113,7 @@ describe('no todos exist in localstorage', () => {
             .should('not.exist')
     })
 
-    it.skip('edits the middle of a todo text', () => {
+    it('edits the middle of a todo text', () => {
         const oldText = existingTodos[0];
         const newText = 'Lastly Feed the cat';
 

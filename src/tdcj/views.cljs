@@ -3,6 +3,14 @@
    [re-frame.core :as rf]
    [tdcj.ids :as i]))
 
+(defn- get-val [ref]
+  (when-let [elem @ref]
+    (.-value elem)))
+
+(defn- set-val [ref val]
+  (when-let [elem @ref]
+    (set! (.-value elem) val)))
+
 (defn checkbox
   ([val on-click]
    [checkbox {} val on-click])
@@ -17,10 +25,13 @@
   ([val on-input]
    [textbox {} val on-input])
   ([attrs val on-input]
+   [textbox attrs val on-input (atom nil)])
+  ([attrs val on-input ref]
    [:input.border.border-neutral-400.rounded-sm.px-2.py-1
-    (merge {:type "text" 
-            :value val 
-            :on-input #(-> % .-target .-value on-input)} 
+    (merge {:type "text"
+            :default-value val
+            :ref (fn [el] (reset! ref el) (set-val ref val))
+            :on-input #(-> % .-target .-value on-input)}
            attrs)]))
 
 (defn btn
@@ -31,31 +42,40 @@
   [:img.w-4.h-4 {:src (str "/icons/" icon-file)}])
 
 (defn todo-item [i todo]
-  [:li.flex.justify-end.items-center.space-x-3.px-4.py-2
-   {:data-id (:id todo)
-    :data-is-done (:done todo)}
-   [:div.txt.grow.overflow-x-auto {:class (when (:done todo) "line-through")}
-    (if-not (:editing todo)
-      [:span (:txt todo)]
-      [:form
-       {:on-submit (fn [e]
-                     (.preventDefault e)
-                     (rf/dispatch [::i/edit-todo i]))}
-       [textbox {:class "w-full" :data-input (:id todo)}
-        (:txt todo) #(rf/dispatch [::i/change-todo i %])]])]
-   [checkbox {:data-edit (:id todo)} (:editing todo) #(rf/dispatch [::i/edit-todo i])]
-   [btn {:data-delete (:id todo)
-         :on-click #(rf/dispatch [::i/remove-todo i])}
-    [icon "trash.svg"]]
-   [checkbox {:data-done (:id todo)} (:done todo) #(rf/dispatch [::i/strike-todo i])]])
+  (let [todo-ref (atom nil)]
+    [:li.flex.justify-end.items-center.space-x-3.px-4.py-2
+     {:data-id (:id todo)
+      :data-is-done (:done todo)}
+     [:div.txt.grow.overflow-x-auto {:class (when (:done todo) "line-through")}
+      (if-not (:editing todo)
+        [:span (:txt todo)]
+        [:form
+         {:on-submit (fn [e]
+                       (.preventDefault e)
+                       (rf/dispatch [::i/edit-todo i]))}
+         [textbox
+          {:class "w-full" :data-input (:id todo)}
+          (:txt todo)
+          #(rf/dispatch [::i/change-todo i (get-val todo-ref)])
+          todo-ref]])]
+     [checkbox {:data-edit (:id todo)} (:editing todo) #(rf/dispatch [::i/edit-todo i])]
+     [btn {:data-delete (:id todo)
+           :on-click #(rf/dispatch [::i/remove-todo i])}
+      [icon "trash.svg"]]
+     [checkbox {:data-done (:id todo)} (:done todo) #(rf/dispatch [::i/strike-todo i])]]))
 
 (defn new-todo []
-  (let [new-todo-txt @(rf/subscribe [::i/new-todo-txt])]
+  (let [new-todo-txt @(rf/subscribe [::i/new-todo-txt])
+        new-todo-ref (atom nil)]
     [:form.flex.justify-between.space-x-2.mb-4
      {:on-submit (fn [e]
                    (.preventDefault e) 
-                   (rf/dispatch [::i/add-todo new-todo-txt]))}
-     [textbox {:id :new-todo-txt :class "grow border-black"} new-todo-txt #(rf/dispatch [::i/edit-new-todo %])]
+                   (rf/dispatch [::i/add-todo (get-val new-todo-ref)]))}
+     [textbox
+      {:id :new-todo-txt :class "grow border-black"} 
+      new-todo-txt
+      #(rf/dispatch [::i/edit-new-todo (get-val new-todo-ref)])
+      new-todo-ref]
      [btn {:type "submit" :id :new-todo-btn} "Add Todo"]]))
 
 (defn main-panel []
